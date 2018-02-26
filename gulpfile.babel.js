@@ -8,6 +8,13 @@ import browserSync from 'browser-sync';
 const reload = browserSync.reload;
 
 
+class TailwindExtractor {
+  static extract(content) {
+    return content.match(/[A-z0-9-:\/]+/g) || [];
+  }
+}
+
+
 const PATHS = {
   css: './src/css/**/*',
   config: './src/tailwind.js',
@@ -16,6 +23,7 @@ const PATHS = {
   views: './src/views/**/*'
 };
 
+
 gulp.task('css', () => {
   return gulp.src(PATHS.css)
     .pipe(plumber())
@@ -23,17 +31,17 @@ gulp.task('css', () => {
       tailwindcss(PATHS.config),
       autoprefixer
     ]))
+    .pipe(purgecss({
+      content: [`${PATHS.dist}**/*.html`],
+      extractors: [
+        {
+          extractor: TailwindExtractor,
+          extensions: ["html", "js"]
+        }
+      ]
+    }))
     .pipe(gulp.dest(PATHS.cssDist))
     .pipe(reload({stream:true}));
-});
-
-gulp.task('purge', () => {
-  return gulp.src(PATHS.css)
-    .pipe(plumber())
-    .pipe(purgecss({
-      content: [`${PATHS.dist}**/*.html`]
-    }))
-    .pipe(gulp.dest(PATHS.cssDist));
 });
 
 gulp.task('views', () => {
@@ -65,6 +73,17 @@ gulp.task('serve', () => {
     }
   });
 });
+
+
+// gulp.task("serve", ["css"], function() {
+//   browserSync.init({
+//     server: "./",
+//     notify: false,
+//     open: false
+//   });
+//   gulp.watch([PATHS.css, PATHS.config], ["css"]);
+//   gulp.watch(PATHS.dist + "*.html").on("change", browserSync.reload);
+// });
 
 gulp.task('default', ['css', 'views', 'serve'], () => {
   gulp.watch([PATHS.views], ['views', 'bs-reload']);
