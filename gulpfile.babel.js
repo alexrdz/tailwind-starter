@@ -3,18 +3,12 @@ import postcss from 'gulp-postcss';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import purgecss from 'gulp-purgecss';
+import sourcemaps from 'gulp-sourcemaps';
+import cleanCSS from 'gulp-clean-css';
 import plumber from 'gulp-plumber';
 import browserSync from 'browser-sync';
+
 const reload = browserSync.reload;
-
-
-class TailwindExtractor {
-  static extract(content) {
-    return content.match(/[A-z0-9-:\/]+/g) || [];
-  }
-}
-
-
 const PATHS = {
   css: './src/css/**/*',
   config: './src/tailwind.js',
@@ -23,9 +17,15 @@ const PATHS = {
   views: './src/views/**/*'
 };
 
+class TailwindExtractor {
+  static extract(content) {
+    return content.match(/[A-z0-9-:\/]+/g) || [];
+  }
+}
 
 gulp.task('css', () => {
   return gulp.src(PATHS.css)
+    .pipe(sourcemaps.init())
     .pipe(plumber())
     .pipe(postcss([
       tailwindcss(PATHS.config),
@@ -40,6 +40,8 @@ gulp.task('css', () => {
         }
       ]
     }))
+    .pipe(cleanCSS({compatibility: 'ie8'}))
+    .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(PATHS.cssDist))
     .pipe(reload({stream:true}));
 });
@@ -50,9 +52,6 @@ gulp.task('views', () => {
     .pipe(gulp.dest('./dist/'))
     .pipe(reload({stream:true}));
 });
-
-
-
 
 gulp.task('browser-sync', () => {
   browserSync.init({
@@ -74,16 +73,7 @@ gulp.task('serve', () => {
   });
 });
 
-
-// gulp.task("serve", ["css"], function() {
-//   browserSync.init({
-//     server: "./",
-//     notify: false,
-//     open: false
-//   });
-//   gulp.watch([PATHS.css, PATHS.config], ["css"]);
-//   gulp.watch(PATHS.dist + "*.html").on("change", browserSync.reload);
-// });
+gulp.task('build', ['css', 'views']);
 
 gulp.task('default', ['css', 'views', 'serve'], () => {
   gulp.watch([PATHS.views], ['views', 'bs-reload']);
