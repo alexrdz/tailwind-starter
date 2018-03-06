@@ -25,6 +25,17 @@ class TailwindExtractor {
 
 gulp.task('css', () => {
   return gulp.src(PATHS.css)
+    .pipe(plumber())
+    .pipe(postcss([
+      tailwindcss(PATHS.config),
+      autoprefixer
+    ]))
+    .pipe(gulp.dest(PATHS.cssDist))
+    .pipe(reload({stream:true}));
+});
+
+gulp.task('build-css', () => {
+  return gulp.src(PATHS.css)
     .pipe(sourcemaps.init())
     .pipe(plumber())
     .pipe(postcss([
@@ -40,7 +51,7 @@ gulp.task('css', () => {
         }
       ]
     }))
-    .pipe(cleanCSS({compatibility: 'ie8'}))
+    .pipe(cleanCSS())
     .pipe(sourcemaps.write('./'))
     .pipe(gulp.dest(PATHS.cssDist))
     .pipe(reload({stream:true}));
