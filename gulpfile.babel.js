@@ -10,11 +10,12 @@ import browserSync from 'browser-sync';
 
 const reload = browserSync.reload;
 const PATHS = {
+  assets: './src/assets',
   css: './src/css/**/*',
   config: './src/tailwind.js',
   cssDist: './dist/css',
   dist: './dist',
-  views: './src/views/**/*'
+  views: './src/views/**/*',
 };
 
 class TailwindExtractor {
@@ -60,16 +61,16 @@ gulp.task('build-css', () => {
 gulp.task('views', () => {
   return gulp.src(PATHS.views)
     .pipe(plumber())
-    .pipe(gulp.dest('./dist/'))
+    .pipe(gulp.dest(PATHS.dist))
     .pipe(reload({stream:true}));
 });
 
-gulp.task('browser-sync', () => {
-  browserSync.init({
-    server: {
-      baseDir: './'
-    }      
-  });
+gulp.task('assets', () => {
+  return gulp.src(`${PATHS.assets}/**/*`)
+    .pipe(plumber())
+    .pipe(gulp.dest(`${PATHS.dist}/assets`))
+    /* Reload the browser CSS after every change */
+    .pipe(reload({stream:true}));
 });
 
 gulp.task('bs-reload', () => {
@@ -79,14 +80,15 @@ gulp.task('bs-reload', () => {
 gulp.task('serve', () => {
   browserSync.init({
     server: {
-      baseDir: './dist'
+      baseDir: PATHS.dist
     }
   });
 });
 
-gulp.task('build', ['css', 'views']);
+gulp.task('build', ['build-css', 'views', 'assets']);
 
-gulp.task('default', ['css', 'views', 'serve'], () => {
+gulp.task('default', ['css', 'views', 'assets', 'serve'], () => {
   gulp.watch([PATHS.views], ['views', 'bs-reload']);
   gulp.watch([PATHS.css], ['css', 'bs-reload']);
+  gulp.watch([PATHS.css], ['assets', 'bs-reload']);
 });
